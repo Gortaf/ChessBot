@@ -48,7 +48,7 @@ async def on_ready():
 async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 	
 	def command_check(message):
-		return True
+		return message.channel == duel_channel and message.author != client.user
 	
 	board = [[{"color": None, "piece": None} for i in range(8)] for i in range(8)]
 	
