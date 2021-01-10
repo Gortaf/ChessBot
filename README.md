@@ -45,6 +45,6 @@ The game ends when a player loses their king, or when no messages have been sent
 
 ### Upcomming features
 
-- A $concede commande
-- Castling
-- And more!
+- "En passant" optional rule
+- Maximum cumulative time optional rule
+- Custom rulesets maybe?
