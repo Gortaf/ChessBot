@@ -45,6 +45,8 @@ The game ends when a player loses their king, or when no messages have been sent
 
 ### Upcomming features
 
+- "public" keyword, to make the duel channel accessible by anyone (without needing to use the spectate feature)
+- "private" keyword, to make the duel channel inaccesible to everyone except the players (no spectate possible)
 - "En passant" optional rule
 - Maximum cumulative time optional rule
 - Custom rulesets maybe?
