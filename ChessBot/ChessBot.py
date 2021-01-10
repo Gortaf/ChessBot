@@ -143,10 +143,10 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 	
 	msg = f"Here's how you play chess with {ctx.guild.me.mention}:\n```\n"
 	msg += "When it's your turn, move your piece with:  $move [piece name] [destination coordinates]\n"
-	msg += "For exemple, to move the 3rd Pawn (P3) to the 4f cell, use $move P3 4f\n(note that you can use $m instead of $move, and that the piece's names and position aren't caps sensitive')\n\n"
+	msg += "For exemple, to move the 3rd Pawn (P3) to the f4 cell, use $move P3 f4\n(note that you can use $m instead of $move, and that the piece's names and positions aren't caps sensitive)\n\n"
 	msg += "Castling is done with $castle [castling rook].\nFor exemple, to castle using the R1 rook, use $castle R1\n\n"
-	msg += "You can concede anytime with $concede, even if it's not your turn. You can also ask your opponent to draw the game with $draw (they will have to accept)."
-	msg += "While I will not register illegal moves, I also won't stop you from putting your king in danger :)\n\n"
+	msg += "You can concede anytime with $concede, even if it's not your turn. You can also ask your opponent to declare the game a draw with $draw (they will have to accept).\nTo win, you have to take the king (not just checkmate it)."
+	msg += "\n\nWhile I will not register illegal moves, I also won't stop you from putting your king in danger :)\n\n"
 	msg += "If someone doesn't take its turn within 10 minutes, the game times out, and the other player is declared winner.\n```"
 	await duel_channel.send(msg)
 	
