@@ -75,7 +75,7 @@ class Rook(ChessPiece):
 	def __init__(self, color, x, y, idt):
 		super().__init__(color, x, y, idt)
 		self.file = "rook_"+self.suf+".png"
-		self.can_castling = True
+		self.can_castle = True
 		
 	def move(self, new_x, new_y, board):
 		
@@ -110,7 +110,7 @@ class Rook(ChessPiece):
 			else:
 				self.x = new_x
 				self.y = new_y
-				self.can_castling = False
+				self.can_castle = False
 				return True
 			
 		# Horizontal movement
@@ -125,14 +125,29 @@ class Rook(ChessPiece):
 			else:
 				self.x = new_x
 				self.y = new_y
-				self.can_castling = False
+				self.can_castle = False
 				return True
 		
 		return False
 	
 	# Called to attempt castling with this rook
-	def castling(self):
-		pass
+	def castling(self, king_x, king_y, board):
+		
+		# can_castle is checked in main to also check the King's attribute
+		# Finds out which rook is concerned (this is kinda meh)
+		if self.x == 0:  # Top left rook
+			to_iter = range(1,4)
+			castle_type = "big"
+			
+		elif self.x == 7:  # Top right rook
+			to_iter = range(5,7)
+			castle_type = "small"
+			
+		for i in to_iter:
+			if board[king_y][i]["piece"]!=None:
+				return (False, None)
+		else:
+			return (True, castle_type)
 	
 class Bishop(ChessPiece):
 	
@@ -200,7 +215,7 @@ class King(ChessPiece):
 	def __init__(self, color, x, y, idt):
 		super().__init__(color, x, y, idt)
 		self.file = "king_"+self.suf+".png"
-		self.can_castling = True
+		self.can_castle = True
 		
 	def move(self, new_x, new_y, board):
 		
@@ -222,7 +237,7 @@ class King(ChessPiece):
 		if not ((x_dist == 1 or y_dist == 1) and x_dist < 2 and y_dist < 2):
 			return False
 		
-		self.can_castling = False
+		self.can_castle = False
 		self.x = new_x
 		self.y = new_y
 		return True
@@ -311,7 +326,7 @@ class Queen(ChessPiece):
 			else:
 				self.x = new_x
 				self.y = new_y
-				self.can_castling = False
+				self.can_castle = False
 				return True
 			
 		# Horizontal movement
@@ -326,7 +341,7 @@ class Queen(ChessPiece):
 			else:
 				self.x = new_x
 				self.y = new_y
-				self.can_castling = False
+				self.can_castle = False
 				return True
 		
 		# If we're here, then the proposed movement isn't vertical

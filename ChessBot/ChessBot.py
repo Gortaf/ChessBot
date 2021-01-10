@@ -50,6 +50,26 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 	def command_check(message):
 		return message.channel == duel_channel and message.author != client.user
 	
+	async def endgame():
+		await asyncio.sleep(60)
+		await duel_channel.delete()
+	
+	async def get_piece(idt):
+		if white == turnset:
+			for piece in white_pieces:
+				if piece.idt.lower() == idt.lower():
+					return piece
+			else:
+				return None
+			
+		elif black == turnset:
+			for piece in black_pieces:
+				if piece.idt.lower() == idt.lower():
+					return piece
+				
+			else:
+				return None
+	
 	board = [[{"color": None, "piece": None} for i in range(8)] for i in range(8)]
 	
 	# Filling the board's color
@@ -116,11 +136,16 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 	move_x = None
 	move_y = None
 	old_piece = None
+	castled_rook = False
+	white_queen_nb= 1
+	black_queen_nb = 1
+	
 	
 	msg = f"Here's how you play chess with {ctx.guild.me.mention}:\n```\n"
 	msg += "When it's your turn, move your piece with:  $move [piece name] [destination coordinates]\n"
-	msg += "For exemple, to move the 3rd Pawn (P3) to the 4f cell, use $move P3 4f\n(you can use $m instead of $move)\n\n"
-	msg += "Castling is done with $castling [castling rook]. (NOT YET IMPLEMENTED)\n\n"
+	msg += "For exemple, to move the 3rd Pawn (P3) to the 4f cell, use $move P3 4f\n(note that you can use $m instead of $move, and that the piece's names and position aren't caps sensitive')\n\n"
+	msg += "Castling is done with $castle [castling rook].\nFor exemple, to castle using the R1 rook, use $castle R1\n\n"
+	msg += "You can concede anytime with $concede, even if it's not your turn. You can also ask your opponent to draw the game with $draw (they will have to accept)."
 	msg += "While I will not register illegal moves, I also won't stop you from putting your king in danger :)\n\n"
 	msg += "If someone doesn't take its turn within 10 minutes, the game times out, and the other player is declared winner.\n```"
 	await duel_channel.send(msg)
@@ -132,6 +157,9 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 			
 			if old_x != None and old_y != None:
 				turn_msg+=f"\nLast turn: **{old_piece.idt}** moved (*{chr(old_x+97)}{old_y+1}* → *{chr(move_x+97)}{move_y+1}*)"
+				if castled_rook:
+					castled_rook = False
+					turn_msg+=" **-castling-**"
 			
 			turn_msg += f"\nWaiting for a play from: {turnset.mention}"
 		else:
@@ -202,22 +230,54 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 		os.remove(str(randname)+".png")
 		
 		if winner != None:
-			await duel_channel.send(f"{winner.name} wins the game!\n(this channel will be deleted in 1 minute)")
-			await asyncio.sleep(60)
-			await duel_channel.delete()
+			await duel_channel.send(f"{winner.name} wins the game!\n(This channel will be deleted in 1 minute)")
+			await endgame()	
 			return
 		
-		while True:
+		end_turn = True
+		while True and end_turn:
 			
 			try:
 				reply = await client.wait_for("message", check=command_check, timeout = 300)
 		
 			except asyncio.TimeoutError:
 				await duel_channel.send(f"{turnset.mention} didn't play in time (10min). Game canceled.\n(This channel will be deleted in 1 minute)")
-				await asyncio.sleep(60)
-				await duel_channel.delete()
+				await endgame()
+				return
 			
-			if "$move" not in reply.content and "$m " not in reply.content and "$castling" not in reply.content:
+			
+			from_player = reply.author == white or reply.author == black
+			if "$concede" in reply.content and from_player:
+				await duel_channel.send(f"**{reply.author.name} has conceded!**\n(This channel will be deleted in 1 minute)")
+				await endgame()
+				return
+			
+			if "$draw" in reply.content and from_player:
+				await duel_channel.send(f"*{reply.author.name} wants to declare this game a draw.\nType $accept to accept\nType $refuse to refuse")
+				
+				# Waiting for an answer
+				while True:
+					try:
+						reply_draw = await client.wait_for("message", check=command_check, timeout = 180)
+						
+					except asyncio.TimeoutError: 
+						duel_channel.send("No reply was given in time. Draw request canceled.")
+						break
+					
+					# The draw request was accepted. Ending the match
+					if reply_draw.content == "$accept":
+						await duel_channel.send("**This match has been declared a draw!**\n(This channel will be deleted in 1 minute)")
+						await endgame()
+						return
+					
+					elif reply_draw.content == "$refuse":
+						await duel_channel.send("Draw request refused. The match continues!")
+						break
+			
+			
+			# If there is no commands, then this is a chat message (15sec lifespan)
+			mv_cmd = "$move" not in reply.content and "$m " not in reply.content
+			if mv_cmd and "$castle" not in reply.content and "$draw" not in reply.content:
 				tmp = await reply.channel.fetch_message(reply.id)
 				await tmp.add_reaction("💬")
 				await tmp.delete(delay = 15)
@@ -226,36 +286,79 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 			if reply.author == turnset:	
 				elements = reply.content.split(" ")
 				
-				if len(elements) != 3:
-					print("Bad command usage")
+				# Easy way to avoid problems between commands argument number
+				if len(elements)<3:
+					elements.append(None)
+					elements.append(None)
+				
+				# Finding the piece in question (if it exists)
+				piece = await get_piece(elements[1])
+				if piece == None:
 					tmp = await reply.channel.fetch_message(reply.id)
 					await tmp.add_reaction("👎")
 					await tmp.delete(delay =2)
 					continue
 				
-				# Finding the piece in question (if it exists)
-				if white == turnset:
-					for piece in white_pieces:
-						if piece.idt.lower() == elements[1].lower():
-							break
-					else:
-						print("White piece not found")
-						tmp = await reply.channel.fetch_message(reply.id)
-						await tmp.add_reaction("👎")
-						await tmp.delete(delay =2)
-						continue
+				if "$castle" in reply.content:
 					
-				elif black == turnset:
-					for piece in black_pieces:
-						if piece.idt.lower() == elements[1].lower():
-							break
+					print(1)
+					# Only Rooks can castle
+					if type(piece) == Rook:
+						print(2)
+						king = await get_piece("K")
 						
-					else:
-						print("Black piece not found")
-						tmp = await reply.channel.fetch_message(reply.id)
-						await tmp.add_reaction("👎")
-						await tmp.delete(delay =2)
-						continue
+						# Can't castle if K or R has moved
+						if piece.can_castle and king.can_castle:
+							print(3)
+							castle_check = piece.castling(king.x, king.y, board)
+							
+							# Can't castle if there's anything in the path
+							if castle_check[0]:
+								print(4)
+								
+								# Results depend on the type of castling
+								if castle_check[1] == "big":
+									print("big")
+									k_mod = -2
+									r_mod = 3
+									
+								elif castle_check[1] == "small":
+									print("smol")
+									k_mod = 2
+									r_mod = -2
+									
+								# Moving the Rook
+								old_x = piece.x
+								old_y = piece.y
+								board[piece.y][piece.x+r_mod]["piece"] = piece
+								board[old_y][old_x]["piece"] = None
+								piece.x = piece.x + r_mod
+								piece.can_castle = False
+								
+								# Moving the king
+								old_x = king.x
+								old_y = king.y
+								board[king.y][king.x+k_mod]["piece"] = king
+								board[old_y][old_x]["piece"] = None
+								king.x = king.x + k_mod
+								king.can_castle = False
+								
+								# Updates the move coords for the movement line
+								move_x = king.x
+								move_y = king.y
+								old_piece = king
+								castled_rook = True
+								
+								# This turn ends								
+								end_turn = False
+								continue
+										
+					# Castling failed
+					tmp = await reply.channel.fetch_message(reply.id)
+					await tmp.add_reaction("👎")
+					await tmp.delete(delay =2)
+					continue
+								
 				
 				try:
 					move_x = ord(elements[2][0].lower())-97
@@ -288,7 +391,17 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 					
 					# If a pawn gets to the end of the board, it becomes a queen
 					if "P" in piece.idt and ((piece.y == 0 and piece.color == "B") or (piece.y == 7 and piece.color == "W")):
-						board[move_y][move_x]["piece"] = Queen(piece.color,piece.x,piece.y,"Q")
+						
+						# Avoids new queens having the same id
+						if turnset == white:
+							to_add = white_queen_nb
+							white_queen_nb +=1
+						else:
+							to_add = black_queen_nb
+							black_queen_nb +=1
+						
+						board[move_y][move_x]["piece"] = Queen(piece.color,piece.x,piece.y,f"Q{to_add}")
+						
 					
 					break
 					
@@ -315,6 +428,8 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 			turnset = black
 		elif turnset == black:
 			turnset = white
+		
+		end_turn = False
 		
 		
 		
@@ -416,7 +531,7 @@ async def move(ctx):
 async def m(ctx):
 	pass
 @client.command(pass_context=False)
-async def castling(ctx):
+async def castle(ctx):
 	pass
 
 # =============================================================================
