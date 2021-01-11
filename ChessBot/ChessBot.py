@@ -41,6 +41,17 @@ async def on_ready():
 	client.spectat_msgs = {}
 	
 	await client.change_presence(activity = discord.Game("$duel @someone"))
+	
+	# A dictionnary of all the bot's custom emotes (correspondes to the pieces)
+	# 0 for white, 1 for black pieces
+	client.emotes = {
+		"pawn": ["<:pawn_white:798140768379863090>","<:pawn_black:798140768379863060>"],
+		"rook": ["<:rook_white:798140768166084609>","<:rook_black:798140768438583296>"],
+		"bishop": ["<:bishop_white:798140767801311243>","<:bishop_black:798140768102514699>"],
+		"knight": ["<:knight_white:798140768383926272>","<:knight_black:798140768204095508>"],
+		"queen": ["<:queen_white:798140768476725278>","<:queen_black:798140768442384404>"],
+		"king": ["<:king_white:798140768165429278>","<:king_black:798140768187449395>"]
+		}
 
 # =============================================================================
 # The coroutine that runs the actual duel
@@ -139,6 +150,8 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 	castled_rook = False
 	white_queen_nb= 1
 	black_queen_nb = 1
+	white_taken = {"pawn":0,"rook":0,"bishop":0,"knight":0,"queen":0,"king":0}
+	black_taken = {"pawn":0,"rook":0,"bishop":0,"knight":0,"queen":0,"king":0}
 	
 	
 	msg = f"Here's how you play chess with {ctx.guild.me.mention}:\n```\n"
@@ -147,13 +160,27 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 	msg += "Castling is done with $castle [castling rook].\nFor exemple, to castle using the R1 rook, use $castle R1\n\n"
 	msg += "You can concede anytime with $concede, even if it's not your turn. You can also ask your opponent to declare the game a draw with $draw (they will have to accept).\nTo win, you have to take the king (not just checkmate it)."
 	msg += "\n\nWhile I will not register illegal moves, I also won't stop you from putting your king in danger :)\n\n"
-	msg += "If someone doesn't take its turn within 10 minutes, the game times out, and the other player is declared winner.\n```"
+	msg += "If someone doesn't take their turn within 10 minutes, the game times out, and the other player is declared winner.\n```"
 	await duel_channel.send(msg)
 	
 	while True:  # Turns will continue until a King is taken
 	
 		if winner == None:
-			turn_msg = f"**White:** {white.name}\n**Black:** {black.name}"
+			
+			# Constructing the list of taken pieces as emotes
+			white_toadd = ""
+			black_toadd = ""
+			for taken_piece,nb in white_taken.items():
+				if nb == 0:
+					continue
+				white_toadd += f"  {client.emotes[taken_piece][1]}\\*{nb}"
+			
+			for taken_piece,nb in black_taken.items():
+				if nb == 0:
+					continue
+				black_toadd += f"  {client.emotes[taken_piece][0]}\\*{nb}"
+			
+			turn_msg = f"**White:** {white.name}  -{white_toadd}\n**Black:** {black.name}  -{black_toadd}"
 			
 			if old_x != None and old_y != None:
 				turn_msg+=f"\nLast turn: **{old_piece.idt}** moved (*{chr(old_x+97)}{old_y+1}* → *{chr(move_x+97)}{move_y+1}*)"
@@ -238,7 +265,7 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 		while True and end_turn:
 			
 			try:
-				reply = await client.wait_for("message", check=command_check, timeout = 300)
+				reply = await client.wait_for("message", check=command_check, timeout = 600)
 		
 			except asyncio.TimeoutError:
 				await duel_channel.send(f"{turnset.mention} didn't play in time (10min). Game canceled.\n(This channel will be deleted in 1 minute)")
@@ -301,29 +328,23 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 				
 				if "$castle" in reply.content:
 					
-					print(1)
 					# Only Rooks can castle
 					if type(piece) == Rook:
-						print(2)
 						king = await get_piece("K")
 						
 						# Can't castle if K or R has moved
 						if piece.can_castle and king.can_castle:
-							print(3)
 							castle_check = piece.castling(king.x, king.y, board)
 							
 							# Can't castle if there's anything in the path
 							if castle_check[0]:
-								print(4)
 								
 								# Results depend on the type of castling
 								if castle_check[1] == "big":
-									print("big")
 									k_mod = -2
 									r_mod = 3
 									
 								elif castle_check[1] == "small":
-									print("smol")
 									k_mod = 2
 									r_mod = -2
 									
@@ -365,8 +386,6 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 					move_y = int(elements[2][1])-1
 				
 				except Exception as e:
-					print("Move coordinates failure")
-					print(e)
 					tmp = await reply.channel.fetch_message(reply.id)
 					await tmp.add_reaction("👎")
 					await tmp.delete(delay =2)
@@ -379,6 +398,15 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 				if piece.move(move_x, move_y, board):
 					
 					old_piece = piece
+					cur_piece = board[move_y][move_x]["piece"]
+					
+					if cur_piece != None:
+						if turnset == white:
+							white_taken[cur_piece.piece_type] += 1
+							
+						else:
+							black_taken[cur_piece.piece_type] += 1
+						
 					
 					# If a king is taken, the game ends
 					if board[move_y][move_x]["piece"] != None and board[move_y][move_x]["piece"].idt == "K":
@@ -386,8 +414,6 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 					
 					board[move_y][move_x]["piece"] = piece
 					board[old_y][old_x]["piece"] = None
-					print(board[move_y][move_x]["piece"])
-					print(piece.x, piece.y)
 					
 					# If a pawn gets to the end of the board, it becomes a queen
 					if "P" in piece.idt and ((piece.y == 0 and piece.color == "B") or (piece.y == 7 and piece.color == "W")):
@@ -396,6 +422,7 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 						if turnset == white:
 							to_add = white_queen_nb
 							white_queen_nb +=1
+							
 						else:
 							to_add = black_queen_nb
 							black_queen_nb +=1
@@ -406,7 +433,6 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 					break
 					
 				else: 
-					print("Moving failed")
 					tmp = await reply.channel.fetch_message(reply.id)
 					await tmp.add_reaction("👎")
 					await tmp.delete(delay =2)
@@ -466,7 +492,7 @@ async def duel(ctx, victim_str=None, *args):
 	await ctx.send(f"{duelist.mention} has challenged you, {victim.mention}, in a game of chess. Will you accept the duel?\n\nType \"$accept\" to accept the duel.\nType \"$refuse\" to refuse the duel.")
 	
 	try:
-		reply = await client.wait_for("message", check=accept_check, timeout = 300)
+		reply = await client.wait_for("message", check=accept_check, timeout = 600)
 	
 	except asyncio.TimeoutError:
 		await ctx.send(f"{duelist.mention}'s challenge request has expired. {victim.mention} didn't accept in time.")
@@ -486,13 +512,19 @@ async def duel(ctx, victim_str=None, *args):
 	
 	# Creating duel channel
 	overwrites = {
-		ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-		ctx.guild.me: discord.PermissionOverwrite(read_messages=True),
-		duelist: discord.PermissionOverwrite(read_messages=True),
-		victim:  discord.PermissionOverwrite(read_messages=True)
+		ctx.guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+		duelist: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+		victim:  discord.PermissionOverwrite(read_messages=True, send_messages=True)
+		
 		}
 	
-	duel_channel = await ctx.guild.create_text_channel(f"chess-{duel_id}", overwrites=overwrites)
+	if "public" in args:
+		overwrites[ctx.guild.default_role] = discord.PermissionOverwrite(send_messages=False)
+		
+	else:
+		overwrites[ctx.guild.default_role] = discord.PermissionOverwrite(read_messages=False)
+	
+	duel_channel = await ctx.guild.create_text_channel(f"chess-{duel_id}", overwrites=overwrites, category=ctx.channel.category)
 	
 	# Adding duel entry
 	if ctx.guild.id not in client.serv_dic.keys():
@@ -506,17 +538,23 @@ async def duel(ctx, victim_str=None, *args):
 		}
 	
 	# Sending the duel message
-	duel_msg = await ctx.send(f"{victim.mention} has accepted {duelist.mention}'s duel!\nThe duel will take place in {duel_channel.mention}.\n\n Everyone can react with 👁️ to this message to gain access to the duel channel as a spectator.")
-	await duel_msg.add_reaction("👁️")
+	msg = f"{victim.mention} has accepted {duelist.mention}'s duel!\nThe duel will take place in {duel_channel.mention}."
+	if "private" not in args and "public" not in args:
+		msg += "\n\n Everyone can react with 👁️ to this message to gain access to the duel channel as a spectator."
+	duel_msg = await ctx.send(msg)
 	
-	# Storing the message to allow spectators to join
-	client.spectat_msgs[duel_msg.id] = duel_channel
+	# If the game is private, no spectating is allowed
+	if "private" not in args and "public" not in args:
+		await duel_msg.add_reaction("👁️")
+	
+		# Storing the message to allow spectators to join
+		client.spectat_msgs[duel_msg.id] = duel_channel
 	
 	await game_on(ctx, duel_channel, duelist, victim, duel_msg)
 	del client.spectat_msgs[duel_msg.id]
 	
 # =============================================================================
-# $accept and $refuse fake commands (avoids raising useless errors)
+# Fake commands (avoids raising useless errors)
 # =============================================================================
 @client.command(pass_context=False)
 async def accept(ctx):
@@ -532,6 +570,12 @@ async def m(ctx):
 	pass
 @client.command(pass_context=False)
 async def castle(ctx):
+	pass
+@client.command(pass_context=False)
+async def draw(ctx):
+	pass
+@client.command(pass_context=False)
+async def concede(ctx):
 	pass
 
 # =============================================================================

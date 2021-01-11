@@ -21,6 +21,7 @@ class Pawn(ChessPiece):
 	
 	def __init__(self, color, x, y, idt):
 		super().__init__(color, x, y, idt)
+		self.piece_type = "pawn"
 		self.file = "pawn_"+self.suf+".png"
 		self.can_double_move = True
 		
@@ -74,6 +75,7 @@ class Rook(ChessPiece):
 	
 	def __init__(self, color, x, y, idt):
 		super().__init__(color, x, y, idt)
+		self.piece_type = "rook"
 		self.file = "rook_"+self.suf+".png"
 		self.can_castle = True
 		
@@ -153,6 +155,7 @@ class Bishop(ChessPiece):
 	
 	def __init__(self, color, x, y, idt):
 		super().__init__(color, x, y, idt)
+		self.piece_type = "bishop"
 		self.file = "bishop_"+self.suf+".png"
 		
 	def move(self, new_x, new_y, board):
@@ -214,6 +217,7 @@ class King(ChessPiece):
 	
 	def __init__(self, color, x, y, idt):
 		super().__init__(color, x, y, idt)
+		self.piece_type = "king"
 		self.file = "king_"+self.suf+".png"
 		self.can_castle = True
 		
@@ -246,6 +250,7 @@ class Knight(ChessPiece):
 	
 	def __init__(self, color, x, y, idt):
 		super().__init__(color, x, y, idt)
+		self.piece_type = "knight"
 		self.file = "knight_"+self.suf+".png"
 	
 	def move(self, new_x, new_y, board):
@@ -295,6 +300,7 @@ class Queen(ChessPiece):
 	
 	def __init__(self, color, x, y, idt):
 		super().__init__(color, x, y, idt)
+		self.piece_type = "queen"
 		self.file = "queen_"+self.suf+".png"
 		
 	def move(self, new_x, new_y, board):
