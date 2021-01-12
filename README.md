@@ -22,7 +22,7 @@ or
 
 >$refuse
 
-to accept or refuse the challenge. If the challenge is accepted, a new channel will be created where the game will play. This channel is only accessible to the 2 players, but any user who wishes to spectate the game can react with the "eye" emoji to the message announcing the game to gain acces to the channel (tho spectators cannot type in the channel)
+to accept or refuse the challenge. If the challenge is accepted, a new channel will be created where the game will play. This channel is only accessible to the 2 players, but any user who wishes to spectate the game can react with the "eye" (👁️) emoji to the message announcing the game to gain acces to the channel (tho spectators cannot type in the channel)
 
 Note that when dueling someone, you can add certain keywords to the end of the duel command for different effects:
 
