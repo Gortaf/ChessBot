@@ -279,8 +279,8 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 				await endgame()
 				return
 			
-			if "$draw" in reply.content and from_player:
-				await duel_channel.send(f"*{reply.author.name} wants to declare this game a draw.\nType $accept to accept\nType $refuse to refuse")
+			if "$draw" == reply.content and from_player:
+				await duel_channel.send(f"{reply.author.name} wants to declare this game a draw.\nType $accept to accept\nType $refuse to refuse")
 				
 				# Waiting for an answer
 				while True:
@@ -300,7 +300,11 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 					elif reply_draw.content == "$refuse":
 						await duel_channel.send("Draw request refused. The match continues!")
 						break
-			
+					
+					else:
+						tmp = await reply.channel.fetch_message(reply.id)
+						await tmp.add_reaction("💬")
+						await tmp.delete(delay = 15)
 			
 			# If there is no commands, then this is a chat message (15sec lifespan)
 			mv_cmd = "$move" not in reply.content and "$m " not in reply.content
