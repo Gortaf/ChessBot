@@ -302,7 +302,7 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 						break
 					
 					else:
-						tmp = await reply.channel.fetch_message(reply.id)
+						tmp = await reply_draw.channel.fetch_message(reply_draw.id)
 						await tmp.add_reaction("💬")
 						await tmp.delete(delay = 15)
 			
