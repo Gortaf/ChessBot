@@ -32,6 +32,8 @@ Note that when dueling someone, you can add certain keywords to the end of the d
 
 The channel will be removed after the game ends
 
+<b>Note: If somehow an unexpected error occurs during the duel, the channel will not be deleted, and the game will stop immediately. If that were to happen, please send an issue report, and specify what caused this problem, so I can fix it as soon as possible</b>
+
 #### Playing the game
 
 To move their pieces on their turn, the players must use the $move, or $m command.
