@@ -24,6 +24,12 @@ or
 
 to accept or refuse the challenge. If the challenge is accepted, a new channel will be created where the game will play. This channel is only accessible to the 2 players, but any user who wishes to spectate the game can react with the "eye" emoji to the message announcing the game to gain acces to the channel (tho spectators cannot type in the channel)
 
+Note that when dueling someone, you can add certain keywords to the end of the duel command for different effects:
+
+-Adding the keyword "public" at the end of the duel command will make the duel channel accessible by anyone without the need to spectate
+
+-Adding the keyword "private" at the end of the duel command will make it impossible to spectate. Nobody besides the duelists, the bot and the admins will have acess to the channel.
+
 The channel will be removed after the game ends
 
 #### Playing the game
@@ -45,8 +51,6 @@ The game ends when a player loses their king, or when no messages have been sent
 
 ### Upcomming features
 
-- "public" keyword, to make the duel channel accessible by anyone (without needing to use the spectate feature)
-- "private" keyword, to make the duel channel inaccesible to everyone except the players (no spectate possible)
 - "En passant" optional rule
 - Maximum cumulative time optional rule
 - Custom rulesets maybe?
