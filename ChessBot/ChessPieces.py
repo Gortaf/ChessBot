@@ -24,8 +24,9 @@ class Pawn(ChessPiece):
 		self.piece_type = "pawn"
 		self.file = "pawn_"+self.suf+".png"
 		self.can_double_move = True
-		
-	def move(self, new_x, new_y, board):
+	
+	# Moves the piece
+	def move(self, new_x, new_y, board, check_move = False):
 		
 		# Check for out of bounds
 		if new_x < 0 or new_x > 7 or new_y < 0 and new_x > 7:
@@ -57,15 +58,19 @@ class Pawn(ChessPiece):
 			
 		# Normal movement
 		if same_col and good_mov and empty_dest:
-			self.x = new_x
-			self.y = new_y
+			if not check_move:  # Truly move only if this wasn't a test
+				self.x = new_x
+				self.y = new_y
+				
 			self.can_double_move = False
 			return True
 	
 		# Attacking movement
 		if atk_right or atk_left:
-			self.x = new_x
-			self.y = new_y
+			if not check_move:
+				self.x = new_x
+				self.y = new_y
+				
 			self.can_double_move = False
 			return True
 		
@@ -79,7 +84,7 @@ class Rook(ChessPiece):
 		self.file = "rook_"+self.suf+".png"
 		self.can_castle = True
 		
-	def move(self, new_x, new_y, board):
+	def move(self, new_x, new_y, board, check_move = False):
 		
 		# Check for out of bounds
 		if new_x < 0 or new_x > 7 or new_y < 0 and new_x > 7:
@@ -110,8 +115,10 @@ class Rook(ChessPiece):
 				if board[tmp_y][new_x]["piece"] != None:
 					return False
 			else:
-				self.x = new_x
-				self.y = new_y
+				if not check_move:  # Only move if this wasn't a test
+					self.x = new_x
+					self.y = new_y
+					
 				self.can_castle = False
 				return True
 			
@@ -125,8 +132,10 @@ class Rook(ChessPiece):
 				if board[new_y][tmp_x]["piece"] != None:
 					return False
 			else:
-				self.x = new_x
-				self.y = new_y
+				if not check_move:
+					self.x = new_x
+					self.y = new_y
+					
 				self.can_castle = False
 				return True
 		
@@ -158,7 +167,7 @@ class Bishop(ChessPiece):
 		self.piece_type = "bishop"
 		self.file = "bishop_"+self.suf+".png"
 		
-	def move(self, new_x, new_y, board):
+	def move(self, new_x, new_y, board, check_move = False):
 		
 		x_dist = abs(new_x-self.x)
 		y_dist = abs(new_y-self.y)
@@ -209,8 +218,10 @@ class Bishop(ChessPiece):
 				return False
 		
 		else:
-			self.x = new_x
-			self.y = new_y
+			if not check_move:  # Only move if this wasn't a test
+				self.x = new_x
+				self.y = new_y
+				
 			return True
 		
 class King(ChessPiece):
@@ -220,8 +231,9 @@ class King(ChessPiece):
 		self.piece_type = "king"
 		self.file = "king_"+self.suf+".png"
 		self.can_castle = True
+		self.in_check = False
 		
-	def move(self, new_x, new_y, board):
+	def move(self, new_x, new_y, board, check_move = False):
 		
 		x_dist = abs(new_x-self.x)
 		y_dist = abs(new_y-self.y)
@@ -242,10 +254,118 @@ class King(ChessPiece):
 			return False
 		
 		self.can_castle = False
-		self.x = new_x
-		self.y = new_y
+		if not check_move:  # Only move if this wasn't a test
+			self.x = new_x
+			self.y = new_y
 		return True
 	
+	def is_in_check(self, board):
+		
+		danger = []  # List of pieces that might check the king
+		
+		# Checks for knights (8 possible positions)
+		for axis in [1,-1]:
+			for coords in [(2,1),(2,-1),(-2,1),(-2,-1)]:
+				coords = coords[::axis]  # Will invert the mods for 2nd main iter
+			
+				try:
+					to_add = board[self.y+coords[0]][self.x+coords[1]]["piece"]
+					if type(to_add) == Knight and to_add.color != self.color:
+						danger.append(to_add)
+				
+				except IndexError:  # Out of bound coordinate
+					continue
+				
+				
+		# Horizontal and Vertical rows of the king
+		hor = [board[self.y][x]["piece"] for x in range(8)]
+		ver = [board[y][self.x]["piece"] for y in range(8)]
+				
+		
+		# Get the first left, right, down & up pieces
+		l_piece = None
+		for l_piece in hor[:self.x][::-1]:
+			if l_piece != None:
+				break
+		
+		r_piece = None
+		for r_piece in hor[self.x+1:]:
+			if r_piece != None:
+				break
+			
+		d_piece = None
+		for d_piece in ver[:self.y][::-1]:
+			if d_piece != None:
+				break
+			
+		u_piece = None
+		for u_piece in ver[self.y+1:]:
+			if u_piece != None:
+				break
+		
+		# Get the first diagonal
+		offset = self.x - self.y
+		diag = [row[i+offset] for i,row in enumerate(board) if 0 <= i+offset < len(row)]
+		
+		# Get the first diagonal pieces
+		ru_piece = None
+		ld_piece = None
+		king_passed = False
+		for cell in diag:
+			
+			if cell["piece"] == self:
+				king_passed = True
+				continue
+				
+			if not king_passed and cell["piece"] != None:
+				ru_piece = cell["piece"]
+				continue
+			
+			if king_passed and cell["piece"] != None:
+				ld_piece = cell["piece"]
+				continue
+		
+		# Get the second diagonal
+		rev_y = 7 - self.y
+		offset = self.x - rev_y
+		diag = [row[len(board)-i+offset-1] for i,row in enumerate(board) if 0 <= len(board)-i+offset-1 < len(board)]
+		
+		# Get the first diagonal pieces
+		lu_piece = None
+		rd_piece = None
+		king_passed = False
+		for cell in diag:
+			
+			if cell["piece"] == self:
+				king_passed = True
+				continue
+				
+			if not king_passed and cell["piece"] != None:
+				lu_piece = cell["piece"]
+				continue
+			
+			if king_passed and cell["piece"] != None:
+				rd_piece = cell["piece"]
+				continue
+			
+		pieces = [l_piece, r_piece, u_piece, d_piece, lu_piece, rd_piece, ru_piece, ld_piece]
+		pieces = [tmp for tmp in pieces if tmp != None]
+		
+		danger += pieces
+		true_danger = []  # List of pieces that ACTUALLY check the king
+		for to_check in danger:
+			
+			# Tests to see if movement to the king is possible
+			if to_check.move(self.x, self.y, board, check_move = True):
+				true_danger.append(to_check)
+		
+		if len(true_danger) == 0:
+			self.in_check = False
+			return (False, [])
+		else:
+			self.in_check = True
+			return (True, true_danger)
+		
 class Knight(ChessPiece):
 	
 	def __init__(self, color, x, y, idt):
@@ -253,7 +373,7 @@ class Knight(ChessPiece):
 		self.piece_type = "knight"
 		self.file = "knight_"+self.suf+".png"
 	
-	def move(self, new_x, new_y, board):
+	def move(self, new_x, new_y, board, check_move = False):
 		
 		# Check for out of bounds
 		if new_x < 0 or new_x > 7 or new_y < 0 and new_x > 7:
@@ -290,8 +410,11 @@ class Knight(ChessPiece):
 		moves.append([self.x+2,self.y+1])
 		
 		if [new_x,new_y] in moves:
-			self.x = new_x
-			self.y = new_y
+			
+			if not check_move: # Only move if this wasn't a test
+				self.x = new_x
+				self.y = new_y
+				
 			return True
 		else:
 			return False
@@ -303,7 +426,7 @@ class Queen(ChessPiece):
 		self.piece_type = "queen"
 		self.file = "queen_"+self.suf+".png"
 		
-	def move(self, new_x, new_y, board):
+	def move(self, new_x, new_y, board, check_move = False):
 		
 		# Check for out of bounds
 		if new_x < 0 or new_x > 7 or new_y < 0 and new_x > 7:
@@ -330,9 +453,10 @@ class Queen(ChessPiece):
 				if board[tmp_y][new_x]["piece"] != None:
 					return False
 			else:
-				self.x = new_x
-				self.y = new_y
-				self.can_castle = False
+				if not check_move:  # Only move if this wasn't a test
+					self.x = new_x
+					self.y = new_y
+					
 				return True
 			
 		# Horizontal movement
@@ -345,9 +469,10 @@ class Queen(ChessPiece):
 				if board[new_y][tmp_x]["piece"] != None:
 					return False
 			else:
-				self.x = new_x
-				self.y = new_y
-				self.can_castle = False
+				if not check_move:
+					self.x = new_x
+					self.y = new_y
+					
 				return True
 		
 		# If we're here, then the proposed movement isn't vertical
@@ -385,8 +510,10 @@ class Queen(ChessPiece):
 			if board[yscan][xscan]["piece"] != None:
 				return False
 		else:
-			self.x = new_x
-			self.y = new_y
+			if not check_move:  # Only move if this wasn't a test
+				self.x = new_x
+				self.y = new_y
+				
 			return True
 		
 		return False

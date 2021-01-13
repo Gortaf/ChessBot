@@ -128,7 +128,9 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 	
 	# Kings
 	board[0][4]["piece"] = King("W",4,0,"K")
+	white_king = board[0][4]["piece"]
 	board[7][4]["piece"] = King("B",4,7,"K")
+	black_king = board[7][4]["piece"]
 	
 	# Randomly decides who is white and who is black
 	if random.randint(0,1):
@@ -192,6 +194,16 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 		else:
 			turn_msg = f"**White:** {white.name}\n**Black:** {black.name}\n**{winner.name} WINS!**"
 		
+		# Checks if either king is in check
+		if winner == None:
+			white_check = white_king.is_in_check(board)
+			black_check = black_king.is_in_check(board)
+		
+		if white_check[0]:
+			turn_msg += "\n**⚠️---THE WHITE KING IS IN CHECK---⚠️**\n"
+		if black_check[0]:
+			turn_msg += "\n**⚠️---THE BLACK KING IS IN CHECK---⚠️**\n"
+		
 		# Initalising the list of pieces of both players
 		white_pieces = []
 		black_pieces = []
@@ -238,7 +250,13 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 				point_coords = list(point_coords)
 				point_coords[0] = point_coords[0] - (offset//3)
 				point_coords = tuple(point_coords)
-				draw.text(point_coords,piece.idt,(0,0,0),font=font)	
+				
+				# The text is black, or red if the piece is threatening a king
+				color = "black"
+				if piece in white_check[1] or piece in black_check[1]:
+					color = "red"
+				
+				draw.text(point_coords,piece.idt,font=font,fill=color)	
 		
 		# If there was a move last turn, draw a line representing it
 		if old_x != None and old_y != None:
@@ -334,14 +352,15 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 					
 					# Only Rooks can castle
 					if type(piece) == Rook:
-						king = await get_piece("K")
+						king = await get_piece("K")							
 						
 						# Can't castle if K or R has moved
 						if piece.can_castle and king.can_castle:
 							castle_check = piece.castling(king.x, king.y, board)
 							
 							# Can't castle if there's anything in the path
-							if castle_check[0]:
+							# Also can't castle if king is in check
+							if castle_check[0] and not king.in_check:
 								
 								# Results depend on the type of castling
 								if castle_check[1] == "big":
