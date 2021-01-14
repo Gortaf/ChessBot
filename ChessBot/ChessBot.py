@@ -297,8 +297,9 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 				await endgame()
 				return
 			
+			exited_draw = False
 			if "$draw" == reply.content and from_player:
-				await duel_channel.send(f"{reply.author.name} wants to declare this game a draw.\nType $accept to accept\nType $refuse to refuse")
+				bot_msg = await duel_channel.send(f"{reply.author.name} wants to declare this game a draw.\nType $accept to accept\nType $refuse to refuse")
 				
 				# Waiting for an answer
 				while True:
@@ -306,7 +307,8 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 						reply_draw = await client.wait_for("message", check=command_check, timeout = 180)
 						
 					except asyncio.TimeoutError: 
-						duel_channel.send("No reply was given in time. Draw request canceled.")
+						bot_reply = await duel_channel.send("No reply was given in time. Draw request canceled.")
+						exited_draw = True
 						break
 					
 					# The draw request was accepted. Ending the match
@@ -316,13 +318,24 @@ async def game_on(ctx,duel_channel, duelist, victim, duel_msg):
 						return
 					
 					elif reply_draw.content == "$refuse":
-						await duel_channel.send("Draw request refused. The match continues!")
+						bot_reply = await duel_channel.send("Draw request refused. The match continues!")
+						exited_draw = True
 						break
 					
 					else:
 						tmp = await reply_draw.channel.fetch_message(reply_draw.id)
 						await tmp.add_reaction("💬")
 						await tmp.delete(delay = 15)
+			
+			# Returns at the start of the loop & cleans the draw message
+			if exited_draw:
+				await reply.delete(delay = 2)
+				await reply_draw.delete(delay = 2)
+				await bot_reply.add_reaction("❌")
+				await bot_reply.delete(delay = 10)
+				await bot_msg.delete(delay = 2)
+				
+				continue
 			
 			# If there is no commands, then this is a chat message (15sec lifespan)
 			mv_cmd = "$move" not in reply.content and "$m " not in reply.content
