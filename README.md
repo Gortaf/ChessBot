@@ -53,6 +53,5 @@ The game continues until either a player looses their king, a player concedes, a
 
 ### Upcomming features
 
-- "En passant" optional rule
-- Maximum cumulative time optional rule
-- Custom rulesets maybe?
+- "En passant"?
+- Maximum cumulative time optional rule?
