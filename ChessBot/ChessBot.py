@@ -505,6 +505,10 @@ async def duel(ctx, victim_str=None, *args):
 	def accept_check(message):
 		return (message.content == "$accept" or message.content == "$refuse") and message.author == victim
 	
+	if ctx.guild == None:
+		await ctx.send("You can only use the duel command in a server.")
+		return
+	
 	if not victim_str:
 		await ctx.send("You need to specify the user you wish to duel.")
 		return
@@ -626,8 +630,9 @@ async def on_raw_reaction_add(payload):
 @client.event
 async def on_raw_reaction_remove(payload):
 	
-	if payload.message_id in client.spectat_msgs.keys() and payload.emoji.name == "👁️" and payload.user_id != client.user.id:
-		await client.spectat_msgs[payload.message_id].set_permissions(payload.member, read_messages=False, send_messages=False)
+	pass  # Doesn't work currently. the payload of this function doesn't include the member.
+# 	if payload.message_id in client.spectat_msgs.keys() and payload.emoji.name == "👁️" and payload.user_id != client.user.id:
+# 		await client.spectat_msgs[payload.message_id].set_permissions(message.auth, read_messages=False, send_messages=False)
 
 client.run(token)
 
