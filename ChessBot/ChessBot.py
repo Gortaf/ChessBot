@@ -52,6 +52,43 @@ async def on_ready():
 		"queen": ["<:queen_white:798140768476725278>","<:queen_black:798140768442384404>"],
 		"king": ["<:king_white:798140768165429278>","<:king_black:798140768187449395>"]
 		}
+	
+# =============================================================================
+# Displays a message when the bot joins a server
+# =============================================================================
+@client.event
+async def on_guild_join(guild):
+	for channel in guild.text_channels:
+		if channel.permissions_for(guild.me).send_messages:
+			msg = "Thank you for adding me to this server!"
+			
+			# Checking for missing perms
+			missing_perms = []
+			if not channel.permissions_for(guild.me).manage_messages:
+				missing_perms.append("-Manage Messages")
+			
+			if not channel.permissions_for(guild.me).attach_files:
+				missing_perms.append("-Attach Files")
+			
+			if not channel.permissions_for(guild.me).manage_channels:
+				missing_perms.append("-Manage Channels")
+				
+			if not channel.permissions_for(guild.me).manage_roles:
+				missing_perms.append("-Manage Roles")
+				
+			if not channel.permissions_for(guild.me).external_emojis:
+				missing_perms.append("-Using External Emojis")
+				
+			if not channel.permissions_for(guild.me).add_reactions:
+				missing_perms.append("-Add Reactions")
+			
+			if len(missing_perms) != 0:
+				to_add = '\n'.join(missing_perms)
+				msg += f"\nI appear to be missing the following permissions, please add them before using the $duel command:\n{to_add}"
+			
+			await channel.send(msg)
+		break
+
 
 # =============================================================================
 # The coroutine that runs the actual duel
