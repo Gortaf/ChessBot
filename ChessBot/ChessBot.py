@@ -85,10 +85,9 @@ async def on_guild_join(guild):
 			if len(missing_perms) != 0:
 				to_add = '\n'.join(missing_perms)
 				msg += f"\nI appear to be missing the following permissions, please add them before using the $duel command:\n{to_add}"
-			
+				msg += "\n\nYou can also have me rejoin through that link to ensure I get the proper permissions: https://discord.com/oauth2/authorize?client_id=797085070422441984&scope=bot&permissions=268807248"
 			await channel.send(msg)
-		break
-
+	
 
 # =============================================================================
 # The coroutine that runs the actual duel
