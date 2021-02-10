@@ -4,7 +4,11 @@ A discord bot that allows you to play Chess with your friends directly on discor
 ![game-screenshot](https://i.ibb.co/FHHCtkX/chessbot-demo.png)
 
 ### Adding this bot to your server
-To add ChessBot to your server, simply click this link: https://discord.com/oauth2/authorize?client_id=797085070422441984&scope=bot&permissions=268807248 and select the server you'd like ChessBot to join
+To add ChessBot to your server, simply click this link: https://discord.com/oauth2/authorize?client_id=797085070422441984&scope=bot&permissions=268807248 and select the server you'd like ChessBot to join.
+
+You can also find ChessBot on [top.gg](top.gg)
+
+[![Discord Bots](https://top.gg/api/widget/797085070422441984.svg)](https://top.gg/bot/797085070422441984)
 
 ### How to use ChessBot
 
