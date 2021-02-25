@@ -59,3 +59,8 @@ The game continues until either a player looses their king, a player concedes, a
 
 - "En passant"?
 - Maximum cumulative time optional rule?
+
+
+### Contact
+If for some reason you need to contact me, please email:
+[gortaf2@gmail.com](mailto:gortaf2@gmail.com)
