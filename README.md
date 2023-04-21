@@ -53,14 +53,3 @@ The piece's ID is written on the top left of the piece. So if I wanted to move m
 ChessBot won't allow illegal moves. However, it will not stop you from putting your king in harm's way (isn't it more fun this way? :D)
 
 The game continues until either a player looses their king, a player concedes, a draw is declared, or no messages have been sent in 10 minutes.
-
-
-### Upcomming features
-
-- "En passant"?
-- Maximum cumulative time optional rule?
-
-
-### Contact
-If for some reason you need to contact me, please email:
-[gortaf2@gmail.com](mailto:gortaf2@gmail.com)
